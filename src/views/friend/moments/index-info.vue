@@ -55,7 +55,7 @@
       <!-- 其他表单元素 -->
     <a-modal :visible="mapModalVisible" title="选择位置" @ok="handleMapOk" @cancel="handleMapCancel">
       <div id="amap-container" style="width: 100%; height: 400px;"></div>
-      <a-input v-model="searchKeyword" placeholder="请输入搜索关键词" style="width: 200px; margin-top: 10px; margin-left: 10px;" />
+      <a-input v-model:value="searchKeyword" placeholder="请输入搜索关键词" style="width: 200px; margin-top: 10px; margin-left: 10px;" />
       <a-button type="primary" @click="searchPlace" style="margin-top: 10px; margin-left: 10px;">搜索</a-button>
     </a-modal>
     </a-card>
@@ -67,7 +67,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted,onUnmounted , ref, nextTick } from 'vue';
 import dayjs, { Dayjs } from 'dayjs';
 import { message, Modal } from 'ant-design-vue';
 import { friendMomentsApi } from '/@/api/friend/friend-moments-api';
@@ -77,8 +77,12 @@ import { privilege } from '/@/lib/privilege-plugin';
 import { SmartLoading } from '/@/components/framework/smart-loading';
 import { useRoute } from 'vue-router';
 import { TableOperator, TABLE_ID, PAGE_SIZE_OPTIONS } from '/@/components/table-operator';
+import AMapLoader from '@amap/amap-jsapi-loader';
+
 const commentRef = ref();
 const mediaRef = ref();
+const activeKey = ref(1);
+
 // 为friendMoments设置默认值
 const friendMoments = ref({
   momentId:undefined,
@@ -99,6 +103,8 @@ let map;
 let marker;
 let placeSearch;
 const searchKeyword = ref('');
+let mapInitialized = ref(false);
+
 onMounted(() => {
   momentId.value = route.name;
   console.log(momentId.value);
@@ -122,39 +128,60 @@ async function confirmUpdate() {
 
 function showMapModal() {
   mapModalVisible.value = true;
-  initMap();
+  nextTick(() => {
+    if (!mapInitialized.value) {
+      initMap();
+    }
+  });
 }
 
-function initMap() {
-  if (!window.AMap) {
-    message.error('高德地图 API 加载失败，请检查网络或 API 密钥');
+async function initMap() {
+  const mapContainer = document.getElementById('amap-container');
+  if (!mapContainer) {
+    message.error('地图容器元素未找到，请稍后重试');
     return;
   }
-  map = new AMap.Map('amap-container', {
-    zoom: 13,
-    center: [116.397428, 39.90923]
-  });
+  window._AMapSecurityConfig = {
+    securityJsCode: "a6c70d77c2069e008e31ca3510d2fd6c",
+  };
+  try {
+    const AMap = await AMapLoader.load({
+      key: "38ee25eed447d766c0db8919f9ad4130", // 申请好的Web端开发者Key，首次调用 load 时必填
+      version: "2.0", // 指定要加载的 JSAPI 的版本，缺省时默认为 1.4.15
+      plugins: ["AMap.Scale", "AMap.PlaceSearch", "AMap.Geocoder"], //需要使用的的插件列表，如比例尺'AMap.Scale'，支持添加多个如：['...','...']
+    });
 
-  marker = new AMap.Marker({
-    position: map.getCenter(),
-    draggable: true
-  });
-  marker.setMap(map);
+    map = new AMap.Map('amap-container', {
+      zoom: 13,
+      center: [116.397428, 39.90923]
+    });
 
-  marker.on('dragend', function(e) {
-    const position = e.lnglat;
-    getAddress(position);
-  });
+    marker = new AMap.Marker({
+      position: map.getCenter(),
+      draggable: true
+    });
+    marker.setMap(map);
 
-  map.on('click', function(e) {
-    const position = e.lnglat;
-    marker.setPosition(position);
-    getAddress(position);
-  });
+    marker.on('dragend', function(e) {
+      const position = e.lnglat;
+      getAddress(position);
+    });
 
-  placeSearch = new AMap.PlaceSearch({
-    map: map
-  });
+    map.on('click', function(e) {
+      const position = e.lnglat;
+      marker.setPosition(position);
+      getAddress(position);
+    });
+
+    placeSearch = new AMap.PlaceSearch({
+      map: map
+    });
+
+    mapInitialized.value = true;
+  } catch (error) {
+    message.error('地图初始化失败，请稍后重试');
+    console.error('地图初始化失败:', error);
+  }
 }
 
 function getAddress(position) {
@@ -168,8 +195,9 @@ function getAddress(position) {
     console.log(result.info);
     if (status === 'complete' && result.info === 'OK') {
       const address = result.regeocode.formattedAddress;
-      console.log(address);
-      friendMoments.value.location = address;
+      const lng = position.getLng();
+      const lat = position.getLat();
+      friendMoments.value.location = `${address}|${lng}|${lat}`;
     }
   });
 }
@@ -182,30 +210,40 @@ function handleMapCancel() {
   mapModalVisible.value = false;
 }
 
-function searchPlace() {
+async function searchPlace() {
+  if (!mapInitialized.value) {
+    message.error('地图尚未初始化，请稍后重试');
+    return;
+  }
   if (!window.AMap) {
     message.error('高德地图 API 加载失败，请检查网络或 API 密钥');
     return;
   }
-  if (searchKeyword.value) {
-    console.log('开始搜索:');
-    placeSearch.search(searchKeyword.value, function(status, result) {
-      console.log('搜索状态:', status);
-      console.log('搜索结果:', result);
-      if (status === 'complete' && result.info === 'OK') {
-        if (result.poiList.pois.length > 0) {
-          const firstPoi = result.poiList.pois[0];
-          console.log('第一个搜索结果的位置:', firstPoi.location);
-          marker.setPosition(firstPoi.location);
-          map.setCenter(firstPoi.location);
-          getAddress(firstPoi.location);
+  const keyword = searchKeyword.value.trim();
+  if (keyword) { 
+    try {
+      placeSearch.search(keyword, function(status, result) {
+        if (status === 'complete' && result.info === 'OK') {
+          if (result.poiList.pois.length > 0) {
+            const firstPoi = result.poiList.pois[0];
+            marker.setPosition(firstPoi.location);
+            map.setCenter(firstPoi.location);
+            getAddress(firstPoi.location);
+          } else {
+            message.warning('未找到相关地点，请更换关键词重试');
+          }
         } else {
-          message.warning('未找到相关地点，请更换关键词重试');
+          // 输出更多错误信息
+          message.error(`搜索地点失败，请稍后重试。错误信息: ${result ? result.info : '未知错误'}`);
+          console.error('搜索地点失败:', status, result);
         }
-      } else {
-        message.error('搜索地点失败，请稍后重试');
-      }
-    });
+      });
+    } catch (error) {
+      message.error('搜索地点时发生错误，请稍后重试');
+      console.error('搜索地点时发生错误:', error);
+    }
+  } else {
+    message.warning('请输入有效的搜索关键词');
   }
 }
 </script>

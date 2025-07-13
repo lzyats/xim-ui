@@ -26,6 +26,7 @@ import LocalStorageKeyConst from '/@/constants/local-storage-key-const.js';
 import VueVideoPlayer from '@videojs-player/vue'
 import 'video.js/dist/video-js.css'
 
+
 /*
  * -------------------- ※ 着重 解释说明下main.js的初始化逻辑 begin ※ --------------------
  *
@@ -84,3 +85,4 @@ if (!token) {
 } else {
   getInfo();
 }
+

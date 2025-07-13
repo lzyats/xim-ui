@@ -16,7 +16,7 @@
     <AddModel ref="addModel" @reloadList="refreshParentPage" />
   </div>
   <div class="smart-table-setting-block">
-    <TableOperator v-model="columns" :tableId="TABLE_ID.FC" :refresh="queryList" />
+    <TableOperator v-model="columns" :tableId="TABLE_ID.FC" :refresh="queryViewRecord" />
   </div>
 </a-row>
 <!---------- 表格操作行 end ----------->
@@ -86,7 +86,7 @@
 <div class="smart-query-table-page">
   <a-pagination showSizeChanger showQuickJumper show-less-items :pageSizeOptions="PAGE_SIZE_OPTIONS"
     :defaultPageSize="queryForm.pageSize" v-model:current="queryForm.pageNum" v-model:pageSize="queryForm.pageSize"
-    :total="total" @change="queryList" @showSizeChange="queryList" :show-total="(total) => `共${total}条`" />
+    :total="total" @change="queryViewRecord" @showSizeChange="queryViewRecord" :show-total="(total) => `共${total}条`" />
 </div>
 </a-card>
 
