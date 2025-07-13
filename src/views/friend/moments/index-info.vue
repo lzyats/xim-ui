@@ -30,6 +30,7 @@
         <a-col :span="10">
           <a-form-item label="位置信息" name="location"  help="位置信息可以为空">
             <a-textarea v-model:value="friendMoments.location" :rows="4" :maxlength="500" :showCount="true" />
+            <a-button type="primary" @click="showMapModal">选择位置</a-button>
           </a-form-item>
           <a-col>
           <a-form-item style="text-align: center;">
@@ -51,6 +52,12 @@
           <MediaRef ref="mediaRef" :momentId="momentId" :key="momentId" />
         </a-tab-pane>
       </a-tabs>
+      <!-- 其他表单元素 -->
+    <a-modal :visible="mapModalVisible" title="选择位置" @ok="handleMapOk" @cancel="handleMapCancel">
+      <div id="amap-container" style="width: 100%; height: 400px;"></div>
+      <a-input v-model="searchKeyword" placeholder="请输入搜索关键词" style="width: 200px; margin-top: 10px; margin-left: 10px;" />
+      <a-button type="primary" @click="searchPlace" style="margin-top: 10px; margin-left: 10px;">搜索</a-button>
+    </a-modal>
     </a-card>
   </a-card>
   <!---------- 查询表单form end ----------->
@@ -83,27 +90,27 @@ const friendMoments = ref({
 });
 
 const momentId = ref();
-
-
-
 const updateFormRef=ref();
-
 const route = useRoute();
 
+// 地图模态框相关
+const mapModalVisible = ref(false);
+let map;
+let marker;
+let placeSearch;
+const searchKeyword = ref('');
 onMounted(() => {
   momentId.value = route.name;
   console.log(momentId.value);
   queryInfo();
 });
 
-// 查询详情
 async function queryInfo() {
   SmartLoading.show();
   const result = await friendMomentsApi.queryInfo(momentId.value);
   friendMoments.value = result.data;
 }
 
-// 确认更新
 async function confirmUpdate() {
   updateFormRef.value.validate().then(async () => {
     SmartLoading.show();
@@ -113,7 +120,94 @@ async function confirmUpdate() {
   });
 }
 
+function showMapModal() {
+  mapModalVisible.value = true;
+  initMap();
+}
 
+function initMap() {
+  if (!window.AMap) {
+    message.error('高德地图 API 加载失败，请检查网络或 API 密钥');
+    return;
+  }
+  map = new AMap.Map('amap-container', {
+    zoom: 13,
+    center: [116.397428, 39.90923]
+  });
+
+  marker = new AMap.Marker({
+    position: map.getCenter(),
+    draggable: true
+  });
+  marker.setMap(map);
+
+  marker.on('dragend', function(e) {
+    const position = e.lnglat;
+    getAddress(position);
+  });
+
+  map.on('click', function(e) {
+    const position = e.lnglat;
+    marker.setPosition(position);
+    getAddress(position);
+  });
+
+  placeSearch = new AMap.PlaceSearch({
+    map: map
+  });
+}
+
+function getAddress(position) {
+  const geocoder = new AMap.Geocoder({
+    radius: 1000,
+    extensions: 'all'
+  });
+  geocoder.getAddress(position, function(status, result) {
+    console.log(position);
+    console.log(status);
+    console.log(result.info);
+    if (status === 'complete' && result.info === 'OK') {
+      const address = result.regeocode.formattedAddress;
+      console.log(address);
+      friendMoments.value.location = address;
+    }
+  });
+}
+
+function handleMapOk() {
+  mapModalVisible.value = false;
+}
+
+function handleMapCancel() {
+  mapModalVisible.value = false;
+}
+
+function searchPlace() {
+  if (!window.AMap) {
+    message.error('高德地图 API 加载失败，请检查网络或 API 密钥');
+    return;
+  }
+  if (searchKeyword.value) {
+    console.log('开始搜索:');
+    placeSearch.search(searchKeyword.value, function(status, result) {
+      console.log('搜索状态:', status);
+      console.log('搜索结果:', result);
+      if (status === 'complete' && result.info === 'OK') {
+        if (result.poiList.pois.length > 0) {
+          const firstPoi = result.poiList.pois[0];
+          console.log('第一个搜索结果的位置:', firstPoi.location);
+          marker.setPosition(firstPoi.location);
+          map.setCenter(firstPoi.location);
+          getAddress(firstPoi.location);
+        } else {
+          message.warning('未找到相关地点，请更换关键词重试');
+        }
+      } else {
+        message.error('搜索地点失败，请稍后重试');
+      }
+    });
+  }
+}
 </script>
 
 <style lang="less" scoped>
