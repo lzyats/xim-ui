@@ -192,7 +192,6 @@ const route = useRoute();
 
 onMounted(() => {
   userId.value = route.name;
-  console.log(route.name);
   queryInfo();
 });
 

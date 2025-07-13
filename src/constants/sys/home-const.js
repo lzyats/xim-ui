@@ -15,3 +15,6 @@ export const USER_PAGE_PATH = '/chat/user/';
 
 // 群组页面路径
 export const GROUP_PAGE_PATH = '/chat/group/';
+
+// 朋友圈页面路径
+export const FRIEND_FRIEND_PAGE_PATH = '/friend/';

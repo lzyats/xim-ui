@@ -121,7 +121,18 @@ export const CODE_BANNED_TYPE_ENUM = {
     desc: '其他违规行为',
   },
 };
+export const CODE_DELETED_ENUM = {
+  AUTH_LING: {
+    value: '0',
+    desc: '正常',
+  },
+  AUTH_YI: {
+    value: '1',
+    desc: '已删除',
+  },
+
+};
 export default {
   CODE_AUTH_ENUM, CODE_BANNED_TIME_ENUM, CODE_BANNED_TYPE_ENUM, CODE_STATUS_USER_HANDLE,
-  CODE_SPECIAL_ENUM, CODE_BANNED_ENUM, CODE_STATUS_ENUM, CODE_SORT_ENUM
+  CODE_SPECIAL_ENUM, CODE_BANNED_ENUM, CODE_STATUS_ENUM, CODE_SORT_ENUM,CODE_DELETED_ENUM
 };

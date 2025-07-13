@@ -80,6 +80,31 @@ router.beforeEach(async (to, from, next) => {
     to.name = menuId;
   }
 
+  // 群组详情
+  if ('moments' == to.name ) {
+    // 获取菜单
+    const menuId = to.params.menuId;
+    const name = to.name;
+    const modules = import.meta.glob('../views/**/**.vue');
+    // 添加路由
+    routerInfo = {
+      path: to.fullPath,
+      name: menuId,
+      meta: {
+        title: to.meta.title,
+        menuType: to.meta.menuType,
+        ignore: false,
+      },
+      component: modules[`../views/friend/` + name + `/index-info.vue`],
+    };
+    // 添加路由
+    router.addRoute('_home', routerInfo);
+    // 添加路由
+    routerMap.set(menuId, routerInfo);
+    // 修改名字
+    to.name = menuId;
+  }
+
   // 设置tagNav
   useUserStore().setTagNav(to, from);
 

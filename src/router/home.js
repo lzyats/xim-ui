@@ -55,6 +55,15 @@ export const homeRouters = [
         },
         component: () => import('/@//views/chat/user/index-info.vue'),
       },
+      {
+        path: '/friend/moments/:menuId',
+        name: 'moments',
+        meta: {
+          title: '朋友圈信息详情',
+          menuType: MENU_TYPE_ENUM.MENU.value,
+        },
+        component: () => import('/@//views/friend/moments/index-info.vue'),
+      },
     ],
   },
 ];
