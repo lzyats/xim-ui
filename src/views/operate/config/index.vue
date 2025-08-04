@@ -42,6 +42,12 @@
               <a-radio value="N">测试短信</a-radio>
             </a-radio-group>
           </a-form-item>
+          <a-form-item label=" 签到奖励入钱包" name="signtoal" :rules="[{ required: true, message: '不能为空' }]" help="开启后签到获取奖励直接入钱包金额">
+            <a-radio-group v-model:value="configform.signtoal">
+              <a-radio value="Y">开通</a-radio>
+              <a-radio value="N">关闭</a-radio>
+            </a-radio-group>
+          </a-form-item>
         </a-col>
 
         <a-col :span="10">
@@ -71,6 +77,16 @@
           </a-form-item>
           <a-form-item label="水印文字" name="watermark" help="设置内容后，app上会显示对应水印文字">
             <a-input v-model:value="configform.watermark" :maxlength="8" :showCount="true" />
+          </a-form-item>
+          <a-form-item label="签到日奖励" name="sign" :rules="[{ required: true, message: '不能为空' }]" help="单日签到奖励金额">
+            <a-input-number style="width: 100%;" v-model:value="configform.sign" addon-after="元" :min="0"
+              :max="1000" :maxlength="20">
+            </a-input-number>
+          </a-form-item>
+          <a-form-item label="推荐奖励" name="invo" :rules="[{ required: true, message: '不能为空' }]" help="成功推荐单个用户奖励">
+            <a-input-number style="width: 100%;" v-model:value="configform.invo" addon-after="元" :min="0"
+              :max="1000" :maxlength="20">
+            </a-input-number>
           </a-form-item>
         </a-col>
 
