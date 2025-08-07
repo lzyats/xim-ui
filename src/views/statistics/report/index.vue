@@ -93,6 +93,11 @@ const columns = ref([
     align: 'center',
   },
   {
+    title: '签到汇总',
+    dataIndex: 'sign',
+    align: 'center',
+  },
+  {
     title: '收入汇总',
     dataIndex: 'total',
     align: 'center',

@@ -64,6 +64,12 @@ const tableColumns = [
     align: 'center',
   },
   {
+    title: '账户余额',
+    dataIndex: 'tradeBalance',
+    width: 100,
+    align: 'center',
+  },
+  {
     title: '交易时间',
     dataIndex: 'createTime',
     width: 100,

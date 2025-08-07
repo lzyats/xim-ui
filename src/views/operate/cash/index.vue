@@ -15,6 +15,10 @@
             <a-input-number v-model:value="cashConfigform.count" addon-after="次" :min="0" :max="1000">
             </a-input-number>
           </a-form-item>
+          <a-form-item label="今日美元汇率" name="rates" :rules="[{ required: true, message: '不能为空' }]">
+            <a-input-number v-model:value="cashConfigform.rates" addon-after="元" :min="0" :max="100000">
+            </a-input-number>
+          </a-form-item>
         </a-col>
         <a-col :span="10">
           <a-form-item label="提现增值服务" name="cost" :rules="[{ required: true, message: '不能为空' }]">
@@ -59,6 +63,7 @@ const cashConfigformState = {
   max: undefined,
   min: undefined,
   rate: undefined,
+  rates: undefined,
   remark: undefined,
 };
 const updateFormRef = ref();

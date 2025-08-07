@@ -55,6 +55,13 @@ export const chatUserApi = {
   updateSpecial: (param) => {
     return postRequest(`/chat/user/special`, param);
   },
+    /**
+   * 内部账号
+   */
+  updateIsvip: (param) => {
+      return postRequest(`/chat/user/isvip`, param);
+  },
+  
   /**
    * 查询认证
    */

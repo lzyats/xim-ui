@@ -62,6 +62,11 @@
         <a-descriptions-item label="封禁原因" v-if="chatUser.banned == 'Y'">
           {{ chatUser.bannedReason }}
         </a-descriptions-item>
+        <a-descriptions-item label="内部账号">
+          <a-tag v-if="chatUser.isvip == '0'" color="magenta">普通账号</a-tag>
+          <a-tag v-if="chatUser.isvip == '1'" color="success">内部账号</a-tag>
+          <a-tag v-if="chatUser.isvip == '2'" color="warning">SVIP</a-tag>
+        </a-descriptions-item>
       </a-descriptions>
     </a-card>
 
@@ -102,6 +107,12 @@
           <a-button type="primary" @click="special">
             <template v-if="chatUser.special == 'Y'">正常账号</template>
             <template v-else>测试账号</template>
+          </a-button>
+        </a-col>
+        <a-col v-privilege="'chat:user:edit'">
+          <a-button type="primary" @click="speciala">
+            <template v-if="chatUser.isvip == 1">普通账号</template>
+            <template v-if="chatUser.isvip == 0">内部账号</template>
           </a-button>
         </a-col>
         <a-col v-privilege="'chat:user:banned'">
@@ -290,6 +301,24 @@ function special() {
         special: chatUser.value.special === 'Y' ? 'N' : 'Y',
       };
       await chatUserApi.updateSpecial(formData);
+      message.success('修改成功');
+      queryInfo();
+    },
+  });
+}
+
+// 内部账号
+function speciala() {
+  const label = chatUser.value.isvip === 0 ? '内部账号' : '普通账号';
+  Modal.confirm({
+    title: '提示',
+    content: '确认修改为[' + label + ']吗?',
+    async onOk() {
+      const formData = {
+        userId: userId.value,
+        isvip: chatUser.value.isvip === 0 ? 1 : 0,
+      };
+      await chatUserApi.updateIsvip(formData);
       message.success('修改成功');
       queryInfo();
     },

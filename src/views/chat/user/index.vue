@@ -122,6 +122,23 @@
           </p>
         </template>
 
+        <template v-if="column.dataIndex === 'parentId'">
+          <p>
+            <span>上级ID：</span>
+            <span>{{ record.parentId }}
+             </span>
+          </p>
+          <p >
+            <span>用户层级：</span>
+            <span>{{ record.userDep }}</span>
+          </p>
+          <p ><span><a-button @click="viewUser(record.parentId)" v-if="record.userDep >0" v-privilege="'chat:user:query'" type="link">
+            查看上级详情
+            </a-button></span>
+            
+          </p>
+        </template>
+
         <template v-if="column.dataIndex === 'onLine'">
           <p>
             <span>注册时间：</span>
@@ -176,6 +193,16 @@
             <a-tag v-if="record.auth == '3'" color="error">
               {{ record.authLabel }}
             </a-tag>
+          </p>
+          <p>
+            <span>内部号码：</span>
+            <a-tag v-if="record.isvip == '0'" color="magenta">
+             普通账号
+            </a-tag>
+            <a-tag v-if="record.isvip == '1'" color="success">
+              内部号码
+            </a-tag>
+
           </p>
           <p v-if="record.authCount">
             <span>实名数量：</span>
@@ -233,6 +260,10 @@ const columns = ref([
   {
     title: '用户信息',
     dataIndex: 'userId',
+  },
+  {
+    title: '推荐信息',
+    dataIndex: 'parentId',
   },
   {
     title: '登录信息',
@@ -298,6 +329,7 @@ async function queryList() {
   tableLoading.value = true;
   try {
     let queryResult = await chatUserApi.queryList(queryForm);
+    console.log(queryResult);
     tableData.value = queryResult.rows;
     total.value = queryResult.total;
   } finally {
