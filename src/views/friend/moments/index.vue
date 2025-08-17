@@ -8,6 +8,9 @@
       <a-form-item label="发布用户ID" class="smart-query-form-item">
         <a-input style="width: 150px" v-model:value="queryForm.userId" placeholder="发布用户ID" :allowClear=true />
       </a-form-item>
+      <a-form-item label="发布者昵称" class="smart-query-form-item">
+        <a-input style="width: 150px" v-model:value="queryForm.nickname" placeholder="发布者昵称" :allowClear=true />
+      </a-form-item>
 
       <a-form-item label="逻辑删除标记" class="smart-query-form-item">
         <SmartEnumSelect width="150px" v-model:value="queryForm.isDeleted" enumName="CODE_DELETED_ENUM"
@@ -63,6 +66,18 @@
             <span>发布用户ID：</span>
             <span>{{ record.userId }}</span>
           </p>
+          
+        </template>
+        <template v-if="column.dataIndex === 'userNo'">
+
+          <p>
+            <span>昵称：</span>
+            <span>{{ record.nickname }}</span>
+          </p>
+          <p>
+            <span>用户编号：</span>
+            <span>{{ record.userNo }}</span>
+          </p>
         </template>
         <template v-if="column.dataIndex === 'content'">
           <p>
@@ -77,9 +92,11 @@
         </template>
         <template v-if="column.dataIndex === 'visibility'">
           <p>
-            <a-tag v-if="record.visibility === 0" color="success">公开</a-tag>
+            <a-tag v-if="record.visibility === 0" color="success">完全公开</a-tag>
             <a-tag v-if="record.visibility === 1" color="error">好友可见</a-tag>
             <a-tag v-if="record.visibility === 2" color="warning">自己可见</a-tag>
+            <a-tag v-if="record.visibility === 3" color="warning">部分可见</a-tag>
+            <a-tag v-if="record.visibility === 4" color="warning">部分不可见</a-tag>
           </p>
         </template>
         <template v-if="column.dataIndex === 'createTime'" >
@@ -100,8 +117,11 @@
         </template>
         <template v-if="column.dataIndex === 'action'">
           <div class="smart-table-operate">
-            <a-button @click="viewMoment(record.momentId)" v-privilege="'friend:moments:query'" type="link">
+            <a-button @click="viewMoment(record.momentId,record.userId)" v-privilege="'friend:moments:query'" type="link">
               信息详情
+            </a-button>
+            <a-button @click="deleteComment(record.momentId)" v-privilege="'friend:moments:query'" type="link">
+              删除信息
             </a-button>
           </div>
         </template>
@@ -128,6 +148,7 @@ import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue
 import { TableOperator, TABLE_ID, PAGE_SIZE_OPTIONS } from '/@/components/table-operator';
 import AddModel from './index-add.vue';
 import { FRIEND_FRIEND_PAGE_PATH } from '/@/constants/sys/home-const';
+import { message, Modal } from 'ant-design-vue';
 
 // ---------------------------- 表格列 ----------------------------
 const columns = ref([
@@ -140,6 +161,10 @@ const columns = ref([
   {
     title: '动态基本信息',
     dataIndex: 'momentId',
+  },
+  {
+    title: '用户信息',
+    dataIndex: 'userNo',
   },
   {
     title: '文字内容',
@@ -212,6 +237,26 @@ function searchQuery() {
   queryList();
 }
 
+// 删除信息操作
+function deleteComment(momentId) {
+  Modal.confirm({
+    title: '提示',
+    content: '确认删除当前朋友圈吗?',
+    okText: '确认',
+    cancelText: '取消',
+    async onOk() {
+      try {
+        await friendMomentsApi.deletedMoments(momentId);
+        message.success('删除成功');
+        queryList();
+      } catch (error) {
+        message.error('删除失败，请重试');
+        console.error('删除评论失败', error);
+      }
+    },
+  });
+}
+
 async function queryList() {
   tableLoading.value = true;
   try {
@@ -231,8 +276,8 @@ function add() {
 }
 
 const router = useRouter();
-function viewMoment(momentId) {
-  router.push(FRIEND_FRIEND_PAGE_PATH + 'moments/' + momentId);
+function viewMoment(momentId,userId) {
+  router.push(FRIEND_FRIEND_PAGE_PATH + 'moments/' + momentId+'/'+userId);
 }
 onMounted(queryList);
 </script>

@@ -84,6 +84,7 @@ router.beforeEach(async (to, from, next) => {
   if ('moments' == to.name ) {
     // 获取菜单
     const menuId = to.params.menuId;
+    const userId = to.params.userId;    // 新增：获取userId
     const name = to.name;
     const modules = import.meta.glob('../views/**/**.vue');
     // 添加路由
@@ -94,6 +95,8 @@ router.beforeEach(async (to, from, next) => {
         title: to.meta.title,
         menuType: to.meta.menuType,
         ignore: false,
+        momentId: menuId, 
+        userId: userId 
       },
       component: modules[`../views/friend/` + name + `/index-info.vue`],
     };

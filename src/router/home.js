@@ -56,7 +56,7 @@ export const homeRouters = [
         component: () => import('/@//views/chat/user/index-info.vue'),
       },
       {
-        path: '/friend/moments/:menuId',
+        path: '/friend/moments/:menuId/:userId',
         name: 'moments',
         meta: {
           title: '朋友圈信息详情',

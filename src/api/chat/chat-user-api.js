@@ -8,6 +8,14 @@ export const chatUserApi = {
     return getRequest('/chat/user/list', param);
   },
   /**
+   * 查询所有用户列表
+   * @returns 
+   */
+  queryListall: () => {
+    return getRequest('/chat/user/listall');
+  },
+  
+  /**
    * 添加账号
    */
   addUser: (param) => {

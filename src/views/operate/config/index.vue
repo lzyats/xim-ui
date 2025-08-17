@@ -42,8 +42,20 @@
               <a-radio value="N">测试短信</a-radio>
             </a-radio-group>
           </a-form-item>
-          <a-form-item label=" 签到奖励入钱包" name="signtoal" :rules="[{ required: true, message: '不能为空' }]" help="开启后签到获取奖励直接入钱包金额">
+          <a-form-item label="签到奖励入钱包" name="signtoal" :rules="[{ required: true, message: '不能为空' }]" help="开启后签到获取奖励直接入钱包金额">
             <a-radio-group v-model:value="configform.signtoal">
+              <a-radio value="Y">开通</a-radio>
+              <a-radio value="N">关闭</a-radio>
+            </a-radio-group>
+          </a-form-item>
+          <a-form-item label="邀请注册加推荐人为好友" name="invoadus" :rules="[{ required: true, message: '不能为空' }]" help="开启后邀请注册直接加推荐人为好友">
+            <a-radio-group v-model:value="configform.invoadus">
+              <a-radio value="Y">开通</a-radio>
+              <a-radio value="N">关闭</a-radio>
+            </a-radio-group>
+          </a-form-item>
+          <a-form-item label="注册后补发朋友圈" name="sendmoment" :rules="[{ required: true, message: '不能为空' }]" help="开启后注册后补发朋友圈">
+            <a-radio-group v-model:value="configform.sendmoment">
               <a-radio value="Y">开通</a-radio>
               <a-radio value="N">关闭</a-radio>
             </a-radio-group>

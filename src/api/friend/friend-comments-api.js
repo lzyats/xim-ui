@@ -16,8 +16,8 @@ export const friendCommentApi = {
   /**
   * 删除指定评论
   */
-  delete: (momentId) => {
-   return getRequest(`/friend/comments/delete/${momentId}`);
+  delete: (commentId,momentId) => {
+   return getRequest(`/friend/comments/delete/${commentId}/${momentId}`);
  },
   
   /**

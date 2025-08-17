@@ -74,7 +74,7 @@
 
     <template v-if="column.dataIndex === 'action'">
       <div class="smart-table-operate">
-        <a-button @click="deleteComment(record.commentId)" v-privilege="'friend:comments:remove'" type="link">
+        <a-button @click="deleteComment(record.commentId,record.momentId)" v-privilege="'friend:comments:remove'" type="link">
           删除评论
         </a-button>
       </div>
@@ -101,6 +101,9 @@ import AddModel from '/@/views/friend/comments/index-add.vue';
 
 const props = defineProps({
   momentId: {
+    type: [Number, String],
+  },
+   userId: {
     type: [Number, String],
   },
 });
@@ -164,13 +167,14 @@ async function queryViewRecord() {
 // 初始化时加载数据
 onMounted(() => {
   console.log(props.momentId);
+  console.log(props.userId);
   queryViewRecord();
 });
 
 // 新建
 const addModel = ref(null);
 function add() {
-  addModel.value.showDrawer(props.momentId);
+  addModel.value.showDrawer(props.momentId,props.userId);
 }
 
 // 刷新评论列表的方法
@@ -181,7 +185,7 @@ function refreshParentPage() {
 }
 
 // 删除评论操作
-function deleteComment(commentId) {
+function deleteComment(commentId,momentId) {
   Modal.confirm({
     title: '提示',
     content: '确认删除当前评论吗?',
@@ -189,7 +193,7 @@ function deleteComment(commentId) {
     cancelText: '取消',
     async onOk() {
       try {
-        await friendCommentApi.delete(commentId);
+        await friendCommentApi.delete(commentId,momentId);
         message.success('删除成功');
         queryViewRecord(props.momentID);
       } catch (error) {

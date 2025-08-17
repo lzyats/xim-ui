@@ -16,8 +16,8 @@ export const friendMediasApi = {
   /**
   * 删除指定评论
   */
-  delete: (momentId) => {
-   return getRequest(`/friend/medias/delete/${momentId}`);
+  delete: (id,momentId) => {
+   return getRequest(`/friend/medias/delete/${id}/${momentId}`);
  },
   
   /**

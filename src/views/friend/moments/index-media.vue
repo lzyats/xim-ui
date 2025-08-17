@@ -84,6 +84,9 @@ const props = defineProps({
   momentId: {
     type: [Number, String],
   },
+  userId: {
+    type: [Number, String],
+  },
 });
 
 const queryFormState = {
@@ -152,7 +155,7 @@ function onDelete(id) {
 async function deleteHelp(id) {
   try {
     tableLoading.value = true;
-    await friendMediasApi.delete(id);
+    await friendMediasApi.delete(id,props.momentId);
     message.success('删除成功');
     queryList();
   } finally {
