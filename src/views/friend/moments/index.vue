@@ -238,7 +238,7 @@ function searchQuery() {
 }
 
 // 删除信息操作
-function deleteComment(momentId) {
+function deleteComment(momentId,msgId) {
   Modal.confirm({
     title: '提示',
     content: '确认删除当前朋友圈吗?',

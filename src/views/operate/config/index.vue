@@ -107,6 +107,10 @@
             help="APP分享功能对应的地址，一般用于软件下载页">
             <a-textarea v-model:value="configform.share" :rows="4" :maxlength="200" :showCount="true" />
           </a-form-item>
+          <a-form-item label=" 批量好友ID" name="friends" :rules="[{ required: true, message: '不能为空' }]"
+            help="注册后自动添加的好友名单,用','号进行分隔">
+            <a-textarea v-model:value="configform.friends" :rows="4" :maxlength="200" :showCount="true" />
+          </a-form-item>
         </a-col>
 
         <a-col :span="10">
@@ -148,6 +152,7 @@ const configformState = {
   packet: undefined,
   share: undefined,
   hook: undefined,
+  friends:undefined
 };
 const updateFormRef = ref();
 // 查询表单form
