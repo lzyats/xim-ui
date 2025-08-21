@@ -47,7 +47,7 @@ const emit = defineEmits(['reloadList']);
 
 // 组件ref
 const formRef = ref();
-const userIdy=0;
+let userIdy=0;
 
 // 数据模型定义
 const formDefault = {
