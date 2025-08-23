@@ -1,205 +1,237 @@
 <template>
-  <a-card>
-    <a-form class="ant-advanced-search-form" :model="notifyForm" autocomplete="off" ref="updateFormRef">
-      <a-row :gutter="24">
-        <a-col :span="12">
-          <a-divider orientation="left"> 首页公告 </a-divider>
-          <!-- 富文本编辑器替换原有文本框 -->
-          <a-form-item label="公告内容" name="content" :rules="[{ required: true, message: '不能为空' }]">
-            <div style="border: 1px solid #d9d9d9; border-radius: 4px;">
-              <!-- 富文本编辑器容器 -->
-              <div ref="editorRef" style="min-height: 300px;"></div>
-              <!-- 隐藏的表单绑定字段（用于表单验证） -->
-              <input 
-                type="hidden" 
-                v-model="notifyForm.content" >
-            </div>
-          </a-form-item>
-          
-          <a-form-item label="是否显示" name="status" :rules="[{ required: true, message: '不能为空' }]">
-            <a-radio-group v-model:value="notifyForm.status">
-              <a-radio value="Y">显示公告</a-radio>
-              <a-radio value="N">隐藏公告</a-radio>
-            </a-radio-group>
-          </a-form-item>
-          <a-form-item style="text-align: center">
-            <a-button style="margin-right: 25px;" type="primary" v-privilege="'operate:notify:edit'"
-              @click="confirmUpdate('保存')">
-              保存
-            </a-button>
-            <a-button type="primary" v-privilege="'operate:notify:edit'" @click="confirmUpdate('推送')">
-              保存并推送
-            </a-button>
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-divider orientation="left"> 公告模板</a-divider>
-          <div class="chatTop-list">
-            <div class="chatTop-item" v-for="(item, i) in notifyDemo" :key="i" @click="setItem(item)">{{ item }}</div>
+  <div>
+    <!-- 编辑 -->
+    <a-modal :open="updateModalShow" :width="750" :title="updateForm.noticeId ? '编辑' : '添加'" ok-text="确认"
+      cancel-text="取消" @cancel="closeUpdateModal" @ok="confirmUpdate">
+      <a-form ref="updateFormRef" :model="updateForm" :rules="updateRules" :label-col="{ span: 5 }">
+        <!-- 公告标题 -->
+        <a-form-item label="公告标题" name="title">
+          <a-input placeholder="标题" v-model:value="updateForm.title" :maxlength="20" :showCount="true" />
+        </a-form-item>
+
+        <!-- Quill富文本编辑器 -->
+        <a-form-item label="公告内容" name="content">
+          <div style="border: 1px solid #e8e8e8">
+            <quill-editor
+              v-model:content="updateForm.content"
+              :options="editorOptions"
+              @update:content="handleContentChange"
+              @ready="handleEditorReady"
+            />
           </div>
-        </a-col>
-      </a-row>
-    </a-form>
-  </a-card>
+        </a-form-item>
+
+        <a-form-item label="是否启用" name="status" :rules="[{ required: true, message: '不能为空' }]">
+          <a-radio-group v-model:value="updateForm.status">
+            <a-radio value="Y">启用</a-radio>
+            <a-radio value="N">关闭</a-radio>
+          </a-radio-group>
+        </a-form-item>
+
+        <a-form-item label="发布时间" name="createTime">
+          <a-date-picker :show-time="{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }" valueFormat="YYYY-MM-DD HH:mm:ss"
+            v-model:value="updateForm.createTime" style="width: 100%" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
+  </div>
 </template>
 
-<script setup>
-import { onMounted, reactive, ref, watch } from 'vue';
+<script setup >
 import { message } from 'ant-design-vue';
-import { notifyApi } from '/@/api/operate/notify-api';
+import { reactive, ref, onMounted } from 'vue';
+import { noticeApi } from '/@/api/operate/notice-api';
+import dayjs from 'dayjs';
 import { SmartLoading } from '/@/components/framework/smart-loading/index.js';
-// 引入富文本编辑器
-import { createEditor, createToolbar } from 'wangeditor';
+import { localRead } from '/@/lib/local-util';
+import LocalStorageKeyConst from '/@/constants/local-storage-key-const.js';
+// 引入Quill编辑器
+import { QuillEditor } from '@vueup/vue-quill';
+import '@vueup/vue-quill/dist/vue-quill.snow.css';
+// 引入Quill核心库用于配置
+import Quill from 'quill';
 
-// ---------------------------- 富文本编辑器配置 ----------------------------
-const editorRef = ref(null);
-const editor = ref(null);
-const toolbarRef = ref(null);
+// emit
+const emit = defineEmits(['reloadList']);
 
-// ---------------------------- 表单数据 ----------------------------
-const notifyFormState = {
-  content: '', // 初始化为空字符串，避免undefined导致问题
-  status: undefined,
-};
+const updateModalShow = ref(false);
 const updateFormRef = ref();
-const notifyDemo = ref([]);
-const notifyForm = reactive({ ...notifyFormState });
+const quillInstance = ref(null); // 用于存储Quill实例
 
-// 初始化富文本编辑器
-function initEditor() {
-  // 创建编辑器实例
-  editor.value = createEditor({
-    selector: editorRef.value,
-    html: notifyForm.content || '', // 初始化内容
-    config: {
-      placeholder: '请输入公告内容...',
-      maxLength: 200, // 限制最大长度
-      // 配置菜单（按需调整）
-      toolbarKeys: [
-        'bold', 'italic', 'underline', 'through', // 基础格式
-        '|',
-        'fontSize', 'fontColor', 'bgColor', // 字体设置
-        '|',
-        'bulletedList', 'numberedList', // 列表
-        '|',
-        'insertLink', 'insertImage', // 插入链接/图片
-        '|',
-        'clearStyle', 'fullScreen' // 清除格式/全屏
-      ],
-      // 实时同步内容到表单
-      onChange(editor) {
-        notifyForm.content = editor.getHtml();
-      }
-    }
-  });
+// Quill配置
+const editorOptions = {
+  theme: 'snow',
+  placeholder: '请输入公告内容...',
+  modules: {
+    toolbar: [
+      ['bold', 'italic', 'underline'],        // 加粗，斜体，下划线，删除线
+      [{ 'header': 1 }, { 'header': 2 }],               // 标题，键值对的形式；1、2表示字体大小
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],     // 列表
+      [{ 'script': 'sub'}, { 'script': 'super' }],      // 上下标
+      [{ 'indent': '-1'}, { 'indent': '+1' }],          // 缩进
+      [{ 'size': ['small', false, 'large', 'huge'] }],  // 字体大小
+      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],        // 几级标题
+      [{ 'color': [] }, { 'background': [] }],          // 字体颜色，字体背景颜色
+      [{ 'font': [] }],                                 // 字体
+      [{ 'align': [] }],                                // 对齐方式
+      ['clean','image'],                                         // 清除字体样式
+    ]
+  },
+  // 添加这行配置禁用用水印等可能使用突变事件的功能
+  blotFormatter: false
+};
 
-  // 创建工具栏实例
-  const toolbar = createToolbar({
-    editor: editor.value,
-    config: {
-      toolbarKeys: [
-        'bold', 'italic', 'underline', 'through',
-        '|',
-        'fontSize', 'fontColor', 'bgColor',
-        '|',
-        'bulletedList', 'numberedList',
-        '|',
-        'insertLink', 'insertImage',
-        '|',
-        'clearStyle', 'fullScreen'
-      ]
-    }
-  });
-}
+let token = localRead(LocalStorageKeyConst.USER_TOKEN);
 
-// 数据查询
-async function queryData() {
-  try {
-    SmartLoading.show();
-    let versionConfig = await notifyApi.getNotifyInfo();
-    let versionDemo = await notifyApi.getNotifyDemo();
-    notifyDemo.value = versionDemo.data;
-    Object.assign(notifyForm, versionConfig.data);
+// 自定义图片上传处理
+const handleEditorReady = (editor) => {
+  quillInstance.value = editor;
+  
+  // 获取工具栏中的图片按钮
+  const toolbar = editor.getModule('toolbar');
+  toolbar.addHandler('image', handleImageUpload);
+};
+
+// 请求地址
+const REQUEST_PATH = import.meta.env.VITE_APP_REQUEST + '/file/upload';
+
+// 图片上传处理函数
+const handleImageUpload = () => {
+  const input = document.createElement('input');
+  input.setAttribute('type', 'file');
+  input.setAttribute('accept', 'image/*');
+  input.click();
+
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
     
-    // 数据加载后更新编辑器内容
-    if (editor.value && notifyForm.content) {
-      editor.value.setHtml(notifyForm.content);
+
+    try {
+      const response = await fetch(REQUEST_PATH, {
+        method: 'POST',
+        body: formData,
+        headers:{ Authorization: token }
+      });
+      const res = await response.json();
+      console.log(res);
+      if (res.code === 200) {
+        // 获取当前光标位置
+        const range = quillInstance.value.getSelection();
+        // 插入图片
+        quillInstance.value.insertEmbed(range.index, 'image', res.data.filePath);
+        // 移动光标到图片后面
+        quillInstance.value.setSelection(range.index + 1);
+      } else {
+        message.error('图片上传失败: ' + res.msg);
+      }
+    } catch (error) {
+      message.error('图片上传失败，请重试');
     }
-  } catch (err) {
-    message.error('数据加载失败');
-  } finally {
-    SmartLoading.hide();
-  }
+  };
+};
+
+const updateFormDefault = {
+  noticeId: undefined,
+  title: undefined,
+  status: 'Y',
+  content: '',
+  isindex:1,
+  createTime: undefined,
+  updateTime: undefined,
+};
+let updateForm = reactive({ ...updateFormDefault });
+
+const updateRules = {
+  title: [{ required: true, message: '请输入标题' }],
+  content: [{ required: true, message: '请输入内容' }],
+  createTime: [{ required: true, message: '请输入发布时间' }],
+};
+
+// 处理富文本内容变化
+const handleContentChange = (content) => {
+  updateForm.content = content;
+};
+
+// 打开编辑弹框
+function openUpdateModal(record) {
+  Object.assign(updateForm, {
+    ...record,
+    content: record.content || ''
+  });
+  updateModalShow.value = true;
+
+  // 延迟设置编辑器内容（确保编辑器已初始化）
+  setTimeout(() => {
+    if (quillInstance.value && record.content) {
+      quillInstance.value.root.innerHTML = record.content;
+    }
+  }, 300);
 }
 
-// 选择模板
-function setItem(content) {
-  notifyForm.content = content;
-  // 同步到编辑器
-  if (editor.value) {
-    editor.value.setHtml(content);
+// 关闭编辑弹框
+function closeUpdateModal() {
+  Object.assign(updateForm, updateFormDefault);
+  updateModalShow.value = false;
+  // 重置编辑器内容
+  if (quillInstance.value) {
+    quillInstance.value.root.innerHTML = '';
   }
 }
 
 // 确认更新
-async function confirmUpdate(actType) {
+async function confirmUpdate() {
   updateFormRef.value.validate().then(async () => {
+    let htmlContent = quillInstance.value.root.innerHTML;
+    // 过滤Vue相关语法并转换为正常网页代码
+    const filteredContent = filterVueSyntax(htmlContent);
+    updateForm.content = filteredContent;
+    // 设置updateTime为当前时间（格式与createTime保持一致：YYYY-MM-DD HH:mm:ss）
+    updateForm.updateTime = dayjs().format('YYYY-MM-DD HH:mm:ss');
     SmartLoading.show();
+    console.log(updateForm);
     try {
-      if (actType === '保存') {
-        await notifyApi.notifyEdit(notifyForm);
-        message.success('保存成功');
+      if (updateForm.noticeId) {
+        await noticeApi.noticeEdit(updateForm);
       } else {
-        await notifyApi.notifyPush(notifyForm);
-        message.success('推送成功');
+        await noticeApi.noticeAdd(updateForm);
       }
-      queryData();
-    } catch (err) {
-      message.error(actType === '保存' ? '保存失败' : '推送失败');
+      message.success(updateForm.noticeId ? '更新成功' : '新增成功');
+      closeUpdateModal();
+      emit('reloadList');
     } finally {
       SmartLoading.hide();
     }
   });
 }
 
-// 生命周期
-onMounted(() => {
-  // 先加载数据，再初始化编辑器
-  queryData().then(() => {
-    initEditor();
-  });
-});
+// 过滤Vue语法的函数
+function filterVueSyntax(html) {
+  // 移除v-开头的指令属性
+  let filtered = html.replace(/v-[a-z-]+="[^"]*"/gi, '');
+  
+  // 移除{{ }}插值表达式
+  filtered = filtered.replace(/\{\{[^}]+\}\}/gi, '');
 
-// 组件卸载时销毁编辑器
-onUnmounted(() => {
-  if (editor.value) {
-    editor.value.destroy();
-  }
+  // 将ql-align类名替换为align
+  //filtered = filtered.replace(/ql-align-([a-z]+)/gi, 'align-$1');
+  
+  // 移除Vue组件标签（假设组件标签包含连字符）
+  filtered = filtered.replace(/<\/?[a-z-]+[^>]*>/gi, (match) => {
+    // 保留基础HTML标签，移除自定义组件标签
+    const basicTags = /<\/?(div|p|span|a|img|h[1-6]|ul|li|ol|strong|em|u|br|table|tr|td|th|tbody|thead|tfoot|blockquote|code)/i;
+    return basicTags.test(match) ? match : '';
+  });
+  
+  // 可以根据需要添加更多过滤规则
+  
+  return filtered;
+}
+
+defineExpose({
+  openUpdateModal,
 });
 </script>
-
-<style scoped>
-.chatTop-list {
-  display: flex;
-  flex-direction: column;
-  margin-top: 12px;
-}
-
-.chatTop-item {
-  border: 1px #ccc solid;
-  padding: 12px;
-  margin-bottom: 12px;
-  cursor: pointer;
-  border-radius: 6px;
-}
-
-.chatTop-item:hover {
-  background-color: #eee;
-}
-
-/* 富文本编辑器样式调整 */
-:deep(.w-e-text-container) {
-  min-height: 300px !important;
-  border-top: 1px solid #d9d9d9 !important;
-}
-</style>

@@ -53,7 +53,7 @@ let reconnectAttempts = 0;
 const maxReconnectAttempts = 99;
 
 // websocket地址
-const SOCKET_PATH = import.meta.env.VITE_APP_REQUEST;
+const SOCKET_PATH = import.meta.env.VITE_APP_SOCKET;
 
 // 设置重连间隔时间（单位：毫秒）
 const reconnectInterval = 5000;
