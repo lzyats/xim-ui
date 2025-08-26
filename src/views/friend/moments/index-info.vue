@@ -37,9 +37,9 @@
             <a-textarea v-model:value="friendMoments.content" :rows="4" :maxlength="300" :showCount="true" />
           </a-form-item>
           <a-form-item label="发布时间" name="createTime">
-            <a-date-picker :show-date="{ defaultValue: dayjs('00:00:00') }" valueFormat="YYYY-MM-DD HH:mm:ss"
-              v-model:value="friendMoments.createTime" style="width: 100%" />
-          </a-form-item>
+          <a-date-picker :show-time="{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }" valueFormat="YYYY-MM-DD HH:mm:ss"
+            v-model:value="friendMoments.createTime" style="width: 100%" />
+        </a-form-item>
         </a-col>
         <a-col :span="10">
           <a-form-item label="位置信息" name="location" help="位置信息可以为空">
