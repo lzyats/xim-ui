@@ -42,6 +42,13 @@
               <a-radio value="N">测试短信</a-radio>
             </a-radio-group>
           </a-form-item>
+          <a-form-item label="消息保存方式" name="msgtodb" :rules="[{ required: true, message: '不能为空' }]" help="选择消息的保存方式">
+            <a-radio-group v-model:value="configform.msgtodb">
+              <a-radio :value="0">不保存</a-radio>
+              <a-radio :value="1">Mysql</a-radio>
+              <a-radio :value="2">Mongodb</a-radio>
+            </a-radio-group>
+          </a-form-item>
           <a-form-item label="签到奖励入钱包" name="signtoal" :rules="[{ required: true, message: '不能为空' }]" help="开启后签到获取奖励直接入钱包金额">
             <a-radio-group v-model:value="configform.signtoal">
               <a-radio value="Y">开通</a-radio>
@@ -112,7 +119,6 @@
             <a-textarea v-model:value="configform.friends" :rows="4" :maxlength="200" :showCount="true" />
           </a-form-item>
         </a-col>
-
         <a-col :span="10">
           <a-form-item label="推送地址" name="hook" help="重要消息推送地址，默认使用[企业微信]进行接收，可输入多行">
             <a-textarea v-model:value="configform.hook" :rows="4" :maxlength="200" :showCount="true" />
@@ -152,7 +158,8 @@ const configformState = {
   packet: undefined,
   share: undefined,
   hook: undefined,
-  friends:undefined
+  friends:undefined,
+  msgtodb:undefined
 };
 const updateFormRef = ref();
 // 查询表单form
