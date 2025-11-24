@@ -60,7 +60,7 @@ const reconnectInterval = 5000;
 
 // 连接到 WebSocket 服务器
 function connect(token) {
-  websocket.value = new WebSocket(SOCKET_PATH + '/wws?Authorization=' + token);
+  websocket.value = new WebSocket(SOCKET_PATH + '/ws?Authorization=' + token);
   websocket.value.onopen = function (event) {
     connected.value = true;
     reconnectAttempts = 0;
@@ -89,6 +89,8 @@ function connect(token) {
 
   websocket.value.onmessage = function (event) {
     const data = JSON.parse(event.data);
+    data.value=data.pushData.data;
+    console.log(data);
     handleMessage(data);
   };
 }
@@ -98,7 +100,8 @@ function handleMessage(data) {
   let privilege = '';
   let title = '';
   let path = '';
-  switch (data.label) {
+  console.log(data.value.label);
+  switch (data.value.label) {
     case 'applyAuth':
       index = '1';
       privilege = 'approve:auth:list';
@@ -143,6 +146,7 @@ function handleMessage(data) {
       break;
 
   }
+  console.log(index);
   if (index === '0') {
     return;
   }
@@ -150,13 +154,14 @@ function handleMessage(data) {
   if (!_.includes(privilegeList.value, privilege)) {
     return;
   }
+  console.log(index);
   // 移除数字
   removeMessage(index);
   // 推送页面
   messages.value.push({
     index: index,
     title: title,
-    count: parseInt(data.value, 10),
+    count: parseInt(data.value.value, 10),
     path: path,
   });
   // 页面排序
@@ -198,6 +203,11 @@ const show = ref(false);
 // ------------------------- 路由跳转  -------------------------
 
 function speechSynthesis(messageValue) {
+  if ('speechSynthesis' in window) {
+    console.log('浏览器支持语音合成');
+  } else {
+    console.log('浏览器不支持语音合成');
+  }
   if (messageCount.value === 0) {
     return;
   }
